@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.az.order.mapper.OrderMapper">
+<!--    新增订单数据-->
+    <insert id="insertOrder">
+        insert into t_order(order_id,user_id,order_money,order_time,
+        order_paystate,order_receiverinfo) values (#{orderId},#{userId},
+        #{orderMoney},#{orderTime},#{orderPaystate},#{orderReceiverinfo});
+        /*每循环一次,oi都会赋值一个orderItems元素对象*/
+        <foreach collection="orderItems" item="oi">
+            insert into t_order_item(
+            order_id,
+            product_id,
+            product_name,
+            product_price,
+            product_image,
+            num
+            ) values (
+            #{orderId},
+            #{oi.productId},
+            #{oi.productName},
+            #{oi.productPrice},
+            #{oi.productImage},
+            #{oi.num});
+        </foreach>
+    </insert>
+    <resultMap id="ORM" type="Order">
+<!--        封装主表-->
+        <id property="orderId" column="order_id"/>
+        <result property="orderMonry" column="order_money"/>
+        <result property="orderTime" column="order_time"/>
+        <result property="orderPaystate" column="order_paystate"/>
+        <result property="orderReceiverinfo" column="order_receiverinfo"/>
+        <result property="userId" column="user_id"/>
+<!--        封装多对关系的属性-->
+        <collection property="orderItems" javaType="ArrayList" ofType="OrderItem">
+            <!--子表字段和属性对应关系-->
+            <id property="id" column="id"/>
+            <result property="orderId" column="order_id"/>
+            <result property="productId" column="product_id"/>
+            <result property="productName" column="product_name"/>
+            <result property="num" column="num"/>
+            <result property="productPrice" column="product_price"/>
+            <result property="productImage" column="product_image"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectOrdersByUserid" resultMap="ORM">
+        select * from t_order innner join t_order_item
+        on t_order.order_id=t_order_item.order_id
+        where t_order.user_id=#{userId}
+    </select>
+    <delete id="deleteOrderById">
+        delete from t_order where order_id=#{orderId};
+        delete from t_order_item where order_id=#{orderId}
+    </delete>
+</mapper>
